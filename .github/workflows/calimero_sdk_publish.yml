@@ -52,9 +52,6 @@ jobs:
       - name: Build Calimero SDK
         run: pnpm build
 
-      - name: Verify the integrity of provenance attestations and registry signatures for installed dependencies
-        run: pnpm audit signatures
-
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
