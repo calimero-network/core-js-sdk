@@ -1,0 +1,6 @@
+echo "Running pre-commit hook..."
+
+if git diff --cached --name-only; then
+    echo "Running checks."
+    (pnpm prettier && pnpm lint:fix)
+fi

@@ -1,0 +1,42 @@
+name: Code Style Checks
+description: 'Run linter and formatter'
+runs:
+  using: 'composite'
+  steps:
+    - name: Get changed files
+      id: changed-files
+      uses: tj-actions/changed-files@v45
+
+    # Check for Markdown/MDX changes
+    - name: Check for Markdown/MDX changes
+      env:
+        ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+      shell: bash
+      run: |
+        echo "Checking for Markdown/MDX changes..."
+        if echo "$ALL_CHANGED_FILES" | grep -qE '\.mdx?$'; then
+           if ! pnpm check:md; then
+            echo "Markdown or MDX files are not properly formatted."
+            exit 1  # Exit with a non-zero status code to indicate failure
+           fi
+        fi
+
+    - name: Check for changes in calimero-sdk
+      shell: bash
+      env:
+        ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+      run: |
+        echo "Checking for changes in calimero-sdk files"
+        if echo "$ALL_CHANGED_FILES" | grep -q '^/.'; then
+          echo "Running checks for the calimero-sdk files"
+          cd packages/calimero-sdk
+          if ! pnpm prettier:check .; then
+            echo "Prettier found unformatted files in calimero-sdk."
+            exit 1  # Fail if Prettier detects issues
+          fi
+          # TODO: Uncomment after fixing linting issues
+          # if ! pnpm lint; then
+          #   echo "Linting issues found in calimero-sdk."
+          #   exit 1  # Fail if linter detects issues
+          # fi
+        fi
