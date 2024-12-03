@@ -25,7 +25,7 @@ jobs:
         with:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
-          scope: '@calimero-is-near'
+          scope: '@calimero-network'
 
       - uses: pnpm/action-setup@v4
         name: Install pnpm
