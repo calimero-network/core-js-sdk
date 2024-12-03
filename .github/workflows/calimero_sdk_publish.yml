@@ -6,6 +6,9 @@ on:
       - master
   workflow_dispatch:
 
+permissions:
+  contents: read # for checkout
+
 jobs:
   metadata:
     name: Get package metadata
@@ -38,6 +41,11 @@ jobs:
     name: Build and release
     runs-on: ubuntu-latest
     needs: metadata
+    permissions:
+      contents: write # to be able to publish a GitHub release
+      issues: write # to be able to comment on released issues
+      pull-requests: write # to be able to comment on released pull requests
+      id-token: write # to enable use of OIDC for npm provenance
     if: needs.metadata.outputs.package_exists == 'false'
     env:
       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -46,7 +54,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
           scope: '@calimero-is-near'
 
@@ -72,6 +80,11 @@ jobs:
       - name: Build Calimero SDK
         run: pnpm buildSdk
 
-      - name: Publish Calimero SDK
-        run: pnpm publish --access public --no-git-checks
-        working-directory: ./
+      - name: Verify the integrity of provenance attestations and registry signatures for installed dependencies
+        run: pnpm audit signatures
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release
